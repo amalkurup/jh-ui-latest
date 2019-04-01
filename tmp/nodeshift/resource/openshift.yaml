@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      name: store
+      namespace: jhapps
+      labels:
+        project: store
+        version: 0.0.0
+        provider: nodeshift
+        app: store
+      annotations:
+        nodeshift/git-branch: master
+        nodeshift/git-commit: df74a291b7b8256fb01e50e1be576e29d9ae5ca0
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 2
+      selector:
+        app: store
+        project: store
+        provider: nodeshift
+      triggers:
+        - type: ConfigChange
+        - type: ImageChange
+          imageChangeParams:
+            automatic: true
+            containerNames:
+              - store
+            from:
+              kind: ImageStreamTag
+              namespace: jhapps
+              name: 'store:latest'
+      template:
+        metadata:
+          labels:
+            project: store
+            version: 0.0.0
+            provider: nodeshift
+            app: store
+          annotations:
+            nodeshift/git-branch: master
+            nodeshift/git-commit: df74a291b7b8256fb01e50e1be576e29d9ae5ca0
+        spec:
+          containers:
+            - image: store
+              name: store
+              securityContext:
+                privileged: false
+              ports:
+                - containerPort: 8080
+                  name: http
+                  protocol: TCP
+              env: []
+  - apiVersion: v1
+    kind: Service
+    spec:
+      selector:
+        project: store
+        provider: nodeshift
+      ports:
+        - protocol: TCP
+          port: 8080
+          targetPort: 8080
+          name: http
+      type: ClusterIP
+    metadata:
+      name: store
+      namespace: jhapps
+      labels:
+        project: store
+        version: 0.0.0
+        provider: nodeshift
+      annotations:
+        nodeshift/git-branch: master
+        nodeshift/git-commit: df74a291b7b8256fb01e50e1be576e29d9ae5ca0
+  - apiVersion: v1
+    kind: Route
+    spec:
+      to:
+        kind: Service
+        name: store
+      port:
+        targetPort: 8080
+    metadata:
+      name: store
+      labels:
+        project: store
+        version: 0.0.0
+        provider: nodeshift
